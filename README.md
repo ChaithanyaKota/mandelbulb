@@ -1,1 +1,1 @@
-# 3d raymarched mandelbulb 
+# 3d mandelbulb 
