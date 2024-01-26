@@ -1,4 +1,4 @@
-
+    precision highp float;
 #define MARCHINGITERATIONS 64
 
 #define MARCHINGSTEP 0.5
@@ -23,10 +23,9 @@ vec3 palette (float t) {
 }
 
 // distance estimator to a mandelbulb set
-// returns the distance to the set on the x coordinate 
-// and the color on the y coordinate
+// returns the distance to the set on the x coordinate and the color on the y coordinate
 vec2 DE(vec3 pos) {
-    float Power = 3.0+4.0*(sin(iTime/30.0)+1.0);
+    float power = 3.0+4.0*(sin(iTime/30.0)+1.0);
 	vec3 z = pos;
 	float dr = 1.0;
 	float r = 0.0;
@@ -37,14 +36,14 @@ vec2 DE(vec3 pos) {
 		// convert to polar coordinates
 		float theta = acos(z.z/r);
 		float phi = atan(z.y,z.x);
-		dr =  pow( r, Power-1.0)*Power*dr + 1.0;
+		dr =  pow( r, power-1.0)*power*dr + 1.0;
 		
 		// scale and rotate the point
-		float zr = pow( r,Power);
-		theta = theta*Power;
-		phi = phi*Power;
+		float zr = pow( r,power);
+		theta = theta*power;
+		phi = phi*power;
 		
-		// convert back to cartesian coordinates
+		// back to cartesian coordinates
 		z = zr*vec3(sin(theta)*cos(phi), sin(phi)*sin(theta), cos(theta));
 		z+=pos;
 	}
@@ -52,22 +51,16 @@ vec2 DE(vec3 pos) {
 }
 
 // MAPPING FUNCTION ... 
-// returns the distance of the nearest object in the direction p on the x coordinate 
-// and the color on the y coordinate
+// returns the distance of the nearest object in the direction p on the x coordinate and the color on the y coordinate
 vec2 map( in vec3 p )
 {
-    //p = fract(p); 
    	vec2 d = DE(p);
-
-  
-
    	return d;
 }
 
 
 // TRACING A PATH : 
-// measuring the distance to the nearest object on the x coordinate
-// and returning the color index on the y coordinate
+// measuring the distance to the nearest object on the x coordinate and returning the color index on the y coordinate
 vec2 trace  (vec3 origin, vec3 ray) {
 	
     //t is the point at which we are in the measuring of the distance
@@ -77,7 +70,7 @@ vec2 trace  (vec3 origin, vec3 ray) {
     for (int i=0; i<MARCHINGITERATIONS; i++) {
     	vec3 path = origin + ray * t;	
     	vec2 dist = map(path);
-    	// we want t to be as large as possible at each step but not too big to induce artifacts
+    	
         t += MARCHINGSTEP * dist.x;
         c += dist.y;
         if (dist.y < SMALLESTSTEP) break;
@@ -86,12 +79,15 @@ vec2 trace  (vec3 origin, vec3 ray) {
     return vec2(t,c);
 }
 
-void mainImage( out vec4 fragColor, in vec2 fragCoord )
+void main()
 {
     // Normalized pixel coordinates (from 0 to 1)
+    vec2 fragCoord = gl_FragCoord.xy;
     vec2 uv = fragCoord/iResolution.xy;
+
 	// Pixel coordinates from -1 to 1
     uv = uv * 2.0 - 1.0;
+
     // Adjusting aspect ratio
     uv.x *= iResolution.x / iResolution.y;
     
@@ -100,6 +96,7 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
 
     //ROTATING THE CAMERA (rotating the ray)
     float rotAngle = 0.4+iTime/40.0 + 6.28*iMouse.x / iResolution.x;
+
     //rotation matrix around the y axis
     ray.xz *= mat2(cos(rotAngle), -sin(rotAngle), sin(rotAngle), cos(rotAngle));
     
@@ -119,5 +116,5 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     
     
     // Output to screen
-    fragColor = vec4(palette(depth.y)*fog,0.0);
+    gl_FragColor = vec4(palette(depth.y)*fog,1.0);
 }
