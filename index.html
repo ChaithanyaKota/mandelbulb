@@ -3,6 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
 
     <link rel="stylesheet" href="styles.css" />
 
@@ -12,12 +14,106 @@
       crossorigin="anonymous"
       defer
     ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.9/dat.gui.js" crossorigin="anonymous"></script>
 
     <title>Mandelbulb</title>
   </head>
 
   <body>
     <canvas id="canvas" height=""> </canvas>
+    <script src="https://webglfundamentals.org/webgl/resources/webgl-utils.js"></script>
     <script src="./main.js" type="module"></script>
+
+    <script id="vertex-shader-3d" type="x-shader/x-vertex">
+      attribute vec4 a_position;
+      void main() {
+        gl_Position = a_position;
+      }
+    </script>
+
+    <script id="fragment-shader-3d" type="x-shader/x-fragment">
+              precision highp float;
+      #define march_iter 64
+      #define m_step 0.5
+      #define z_near 0.1
+      #define z_far 3.0
+      #define z_max 1.5
+      #define mandlebrot_iters 64
+      
+      uniform vec3      iResolution;
+      uniform float     iTime;
+      uniform vec4      iMouse;
+
+
+      vec3 colorMap( in float t, in vec3 a, in vec3 b, in vec3 c, in vec3 d )
+      {
+          return a + b*cos( 6.28318*(c*t+(b*d/a)) );
+      }
+
+
+      vec3 colorPallete (float t) {
+          return colorMap( t, vec3(0.5,0.5,0.5),vec3(0.5,0.5,0.5),vec3(0.01,0.01,0.01),vec3(0.00, 0.15, 0.20) );
+      }
+
+
+      vec2 DE(vec3 pos) {
+        float pwr = 3.0+4.0*(sin(iTime/30.0)+1.0);
+      	vec3 z = pos;
+      	float dr = 1.0;
+      	float r = 0.0;
+      	for (int i = 0; i < mandlebrot_iters ; i++) {
+      		r = length(z);
+      		if (r>z_max) break;
+      		float theta = acos(z.z/r);
+      		float phi = atan(z.y,z.x);
+      		dr =  pow( r, pwr-1.0)*pwr*dr + 1.0;
+      		float zr = pow( r,pwr);
+      		theta = theta*pwr;
+      		phi = phi*pwr;
+      		z = zr*vec3(sin(theta)*cos(phi), sin(phi)*sin(theta), cos(theta));
+      		z+=pos;
+      	}
+      	return vec2(0.5*log(r)*r/dr,50.0*pow(dr,0.128/float(march_iter)));
+      }
+
+
+      vec2 map( in vec3 p )
+      {
+         	vec2 d = DE(p);
+         	return d;
+      }
+
+      vec2 tr  (vec3 origin, vec3 ray) {
+          float t =0.0;
+          float c = 0.0;
+          for (int i=0; i<march_iter; i++) {
+          	vec3 path = origin + ray * t;
+          	vec2 dist = map(path);
+              t += m_step * dist.x;
+              c += dist.y;
+              if (dist.y < z_near) break;
+          }
+          return vec2(t,c);
+      }
+
+      
+      void main()
+      {
+        vec2 fragCoord = gl_FragCoord.xy;
+          vec2 uv = fragCoord/iResolution.xy;
+          uv = uv * 2.0 - 1.0;
+          uv.x *= iResolution.x / iResolution.y;
+          vec3 ray = normalize(vec3 (uv,1.0));
+          float rotAngle = 0.4+iTime/40.0 + 6.28*iMouse.x / iResolution.x;
+          ray.xz *= mat2(cos(rotAngle), -sin(rotAngle), sin(rotAngle), cos(rotAngle));
+          float camDist = z_far * iMouse.y / iResolution.y;
+          if (iMouse.xy==vec2(0)) camDist = z_far*0.55;
+          vec3 origin = vec3 (camDist * sin(rotAngle),0.0,-camDist *cos(rotAngle));
+      	vec2 depth = tr(origin,ray);
+      	float fog = 1.0 / (1.0 + depth.x * depth.x * 0.1);
+          vec3 fc = vec3(fog);
+          gl_FragColor = vec4(colorPallete(depth.y)*fog,1.0);
+      }
+    </script>
   </body>
 </html>
