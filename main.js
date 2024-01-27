@@ -1,6 +1,5 @@
 main();
 
-
 function main() {
   const canvas = document.querySelector("#canvas");
   const gl = canvas.getContext("webgl");
@@ -8,12 +7,15 @@ function main() {
     return;
   }
 
-  var vs = `attribute vec4 a_position;
-      void main() {
+  var vs = `
+    attribute vec4 a_position;
+    void main() {
         gl_Position = a_position;
-      }`;
+    }
+    `;
 
-  var fs = `precision highp float;
+  var fs = `
+  precision highp float;
   #define MARCHINGITERATIONS 64
   
   #define MARCHINGSTEP 0.5
@@ -104,7 +106,7 @@ function main() {
       
       vec3 ray = normalize(vec3 (uv,1.0));
   
-      float rotAngle = 0.3+iTime/40.0 + 6.28*iMouse.x / iResolution.x;
+      float rotAngle = 0.4+iTime/40.0 + 6.28*iMouse.x / iResolution.x;
       
       ray.xz *= mat2(cos(rotAngle), -sin(rotAngle), sin(rotAngle), cos(rotAngle));
       
@@ -120,35 +122,30 @@ function main() {
       
       
       gl_FragColor = vec4(palette(depth.y)*fog,1.0);
-  }`; 
+  }`;
   var program = webglUtils.createProgramFromSources(gl, [vs, fs]);
 
   const positionAttributeLocation = gl.getAttribLocation(program, "a_position");
 
-  // buffer 
+  // buffer
   const positionBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
-    -1, -1,
-    1, -1,
-    -1, 1,
-    -1, 1,
-    1, -1,
-    1, 1,
-  ]), gl.DYNAMIC_DRAW);
+  gl.bufferData(
+    gl.ARRAY_BUFFER,
+    new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]),
+    gl.DYNAMIC_DRAW
+  );
 
   webglUtils.resizeCanvasToDisplaySize(gl.canvas);
   gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
   gl.useProgram(program);
 
-  var resolution = gl.getUniformLocation(program, 'iResolution');
-  var time = gl.getUniformLocation(program, 'iTime');
-
+  var resolution = gl.getUniformLocation(program, "iResolution");
+  var time = gl.getUniformLocation(program, "iTime");
 
   function render(scene) {
     webglUtils.resizeCanvasToDisplaySize(gl.canvas);
-
 
     gl.viewport(0, 0, canvas.width, canvas.height);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -157,13 +154,11 @@ function main() {
     scene /= 1000;
 
     gl.uniform1f(time, scene);
-    
-   
 
     var size = 2;
     var type = gl.FLOAT;
-    var normalize = false; 
-    var stride = 0; 
+    var normalize = false;
+    var stride = 0;
     var offset = 0;
 
     gl.vertexAttribPointer(
@@ -172,20 +167,14 @@ function main() {
       type,
       normalize,
       stride,
-      offset,
+      offset
     );
 
     gl.enableVertexAttribArray(positionAttributeLocation);
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
 
-
-    gl.drawArrays(
-      gl.TRIANGLES,
-      0,
-      6,
-    );
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
     window.requestAnimationFrame(render);
   }
   window.requestAnimationFrame(render);
 }
-
