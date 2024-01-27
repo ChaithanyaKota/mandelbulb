@@ -106,7 +106,7 @@ function main() {
       
       vec3 ray = normalize(vec3 (uv,1.0));
   
-      float rotAngle = 0.4+iTime/40.0 + 6.28*iMouse.x / iResolution.x;
+      float rotAngle = 0.3+iTime/40.0 + 6.28*iMouse.x / iResolution.x;
       
       ray.xz *= mat2(cos(rotAngle), -sin(rotAngle), sin(rotAngle), cos(rotAngle));
       
