@@ -1,1 +1,1 @@
-# 3d mandelbul
+# 3d mandelbulb
