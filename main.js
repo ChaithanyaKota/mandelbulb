@@ -151,7 +151,7 @@ function main() {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.uniform3fv(resolution, [gl.canvas.width, gl.canvas.height, 0]);
 
-    scene /= 1000;
+    scene /= 1500;
 
     gl.uniform1f(time, scene);
 
